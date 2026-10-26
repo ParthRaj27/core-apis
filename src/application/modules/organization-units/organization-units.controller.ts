@@ -52,6 +52,7 @@ export class OrganizationUnitsController {
   @ApiOperation({ summary: 'Create a new organization unit' })
   @ApiCreatedResponse({ type: OrganizationUnitResponse })
   @HttpCode(HttpStatus.CREATED)
+  @Roles(ERole.OrgAdmin, ERole.SuperAdmin)
   @Post()
   public async create(
     @CurrentUser() user: AuthenticatedUser,
@@ -67,6 +68,7 @@ export class OrganizationUnitsController {
   @ApiOkResponse({ type: OrganizationUnitResponse })
   @ApiParam({ name: 'id', description: 'Unit UUID' })
   @HttpCode(HttpStatus.OK)
+  @Roles(ERole.OrgAdmin, ERole.SuperAdmin)
   @Put(':id')
   public async update(
     @Param('id') id: string,

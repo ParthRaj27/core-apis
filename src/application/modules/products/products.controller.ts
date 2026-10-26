@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
@@ -92,11 +92,13 @@ export class ProductsController {
     @Body() body: CreateProductRequest,
   ): Promise<ProductResponse> {
     await this.assertTaxOwnership(body.taxId, user);
+    this.assertCanManageProductUnits(body, user);
     const command = this.mapper.map(body, CreateProductRequest, CreateProductCommand);
     command.organizationId = user.organizationId;
     command.createdById    = user.dbUserId;
     command.unitIds        = body.unitIds;
     command.defaultUnitId  = body.defaultUnitId;
+    command.units          = body.units;
     const result = await this.mediator.execute<CreateProductCommand, Product>(command);
     return this.mapper.map(result, Product, ProductResponse);
   }
@@ -112,10 +114,12 @@ export class ProductsController {
     const existing = await this.mediator.execute<GetProductQuery, Product>(fetchQuery);
     assertOrgOwnership(user, existing.organizationId, 'Product');
     await this.assertTaxOwnership(body.taxId, user);
+    this.assertCanManageProductUnits(body, user);
     const command = this.mapper.map(body, UpdateProductRequest, UpdateProductCommand);
     command.id           = id;
     command.unitIds      = body.unitIds;
     command.defaultUnitId = body.defaultUnitId;
+    command.units         = body.units;
     const result  = await this.mediator.execute<UpdateProductCommand, Product>(command);
     return this.mapper.map(result, Product, ProductResponse);
   }
@@ -128,6 +132,20 @@ export class ProductsController {
     assertOrgOwnership(user, tax.organizationId, 'Tax');
     if (!tax.isActive) {
       throw new BadRequestException('Inactive tax cannot be assigned to a product');
+    }
+  }
+
+  private assertCanManageProductUnits(body: CreateProductRequest | UpdateProductRequest, user: AuthenticatedUser): void {
+    const changesUnits = body.units !== undefined
+      || body.unitIds !== undefined
+      || body.defaultUnitId !== undefined
+      || body.baseUnitId !== undefined
+      || body.defaultSaleUnitId !== undefined
+      || body.defaultPurchaseUnitId !== undefined
+      || body.packSize !== undefined;
+    const isAdmin = user.roles?.some((role) => role === ERole.OrgAdmin || role === ERole.SuperAdmin);
+    if (changesUnits && !isAdmin) {
+      throw new ForbiddenException('Only Org Admin or Super Admin can configure product units');
     }
   }
 

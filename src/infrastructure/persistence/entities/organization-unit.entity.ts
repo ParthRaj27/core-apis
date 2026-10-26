@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { CORE_SCHEMA, ECoreTableName } from './e-core-table-name';
 import { OrganizationEntity } from './organization.entity';
+import { EQuantityRoundingMode } from '../../../application/modules/organization-units/domain';
 
 const PK_NAME = 'PK_' + ECoreTableName.OrganizationUnits;
 
@@ -32,6 +33,26 @@ export class OrganizationUnitEntity {
   @AutoMap()
   @Column({ name: 'symbol', type: 'varchar', length: 20 })
   public symbol: string;
+
+  @AutoMap()
+  @Column({ name: 'quantity_precision', type: 'smallint', default: 4 })
+  public quantityPrecision: number;
+
+  @AutoMap()
+  @Column({ name: 'allow_fraction', type: 'boolean', default: true })
+  public allowFraction: boolean;
+
+  @AutoMap()
+  @Column({ name: 'rounding_mode', type: 'varchar', length: 16, default: EQuantityRoundingMode.Nearest })
+  public roundingMode: EQuantityRoundingMode;
+
+  @AutoMap()
+  @Column({ name: 'minimum_quantity', type: 'decimal', precision: 24, scale: 8, nullable: true })
+  public minimumQuantity?: string | null;
+
+  @AutoMap()
+  @Column({ name: 'quantity_increment', type: 'decimal', precision: 24, scale: 8, default: 1 })
+  public quantityIncrement: string;
 
   @AutoMap()
   @Column({ name: 'is_active', type: 'boolean', default: true })

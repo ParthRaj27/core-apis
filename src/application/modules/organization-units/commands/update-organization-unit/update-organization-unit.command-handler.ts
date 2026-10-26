@@ -8,6 +8,7 @@ import { ORGANIZATION_UNIT_REPO } from '../../../../constants';
 import { OrganizationUnit } from '../../domain';
 import { IOrganizationUnitRepo } from '../../i-organization-unit.repo';
 import { UpdateOrganizationUnitCommand } from './update-organization-unit.command';
+import { validateQuantityUnitRules } from '../../helpers';
 
 @CommandHandlerStrict(UpdateOrganizationUnitCommand)
 export class UpdateOrganizationUnitCommandHandler implements ICommandHandler<UpdateOrganizationUnitCommand, OrganizationUnit> {
@@ -27,6 +28,8 @@ export class UpdateOrganizationUnitCommandHandler implements ICommandHandler<Upd
         (existing as unknown as Record<string, unknown>)[key] = patch[key];
       }
     });
+
+    validateQuantityUnitRules(existing);
 
     return this.repo.updateAsync(existing);
   }

@@ -40,13 +40,19 @@ export class ProductProfile extends AutomapperProfile {
         forMember(
           (dest) => dest.productUnits,
           mapFrom((src) =>
-            src.productUnits?.map((pu) => ({
+            src.productUnits?.map((pu): ProductUnit => ({
               id: pu.id,
               productId: pu.productId,
+              organizationId: pu.organizationId,
               unitId: pu.unitId,
               unitName: pu.unit?.name,
               unitSymbol: pu.unit?.symbol,
               isDefault: pu.isDefault,
+              conversionFactor: pu.conversionFactor,
+              allowedForSale: pu.allowedForSale,
+              allowedForPurchase: pu.allowedForPurchase,
+              barcode: pu.barcode,
+              isActive: pu.isActive,
             })) ?? [],
           ),
         ),
@@ -80,10 +86,16 @@ export class ProductProfile extends AutomapperProfile {
           (dest) => dest.units,
           mapFrom((src) =>
             src.productUnits?.map((pu): ProductUnitResponse => ({
+              id: pu.id,
               unitId: pu.unitId,
               unitName: pu.unitName,
               unitSymbol: pu.unitSymbol,
               isDefault: pu.isDefault,
+              conversionFactor: pu.conversionFactor,
+              allowedForSale: pu.allowedForSale,
+              allowedForPurchase: pu.allowedForPurchase,
+              barcode: pu.barcode,
+              isActive: pu.isActive,
             })) ?? [],
           ),
         ),

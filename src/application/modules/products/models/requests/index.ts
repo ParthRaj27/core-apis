@@ -8,3 +8,4 @@ export * from './get-product-image-upload-url.request';
 export * from './get-next-sku.request';
 export * from './link-product-supplier.request';
 export * from './update-product-supplier.request';
+export * from './product-unit-configuration.request';

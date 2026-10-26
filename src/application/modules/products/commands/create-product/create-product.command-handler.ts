@@ -11,7 +11,7 @@ import { IProductUnitRepo } from '../../i-product-unit.repo';
 import { EProductLogAction } from 'src/application/shared/enums/e-product-log-action.enum';
 import { ActivityLogService, ProductActivityLogger, ProductLogEntry } from 'src/application/shared';
 import { EActivityAction } from 'src/infrastructure/persistence/entities/activity-log.entity';
-import { generateSku } from '../../helpers';
+import { generateSku, resolveProductUnitConfiguration } from '../../helpers';
 import { CreateProductCommand } from './create-product.command';
 
 @CommandHandlerStrict(CreateProductCommand)
@@ -27,6 +27,19 @@ export class CreateProductCommandHandler implements ICommandHandler<CreateProduc
 
   public async execute(command: CreateProductCommand): Promise<Product> {
     this.logger.info(`Executing ${CreateProductCommand.name}`);
+    const unitConfiguration = resolveProductUnitConfiguration(command);
+    if (unitConfiguration) {
+      await this.productUnitRepo.validateConfigurationAsync(
+        command.organizationId,
+        unitConfiguration.units,
+        unitConfiguration.baseUnitId,
+        unitConfiguration.defaultSaleUnitId,
+        unitConfiguration.defaultPurchaseUnitId,
+      );
+      command.baseUnitId = unitConfiguration.baseUnitId;
+      command.defaultSaleUnitId = unitConfiguration.defaultSaleUnitId;
+      command.defaultPurchaseUnitId = unitConfiguration.defaultPurchaseUnitId;
+    }
     const product = this.mapper.map(command, CreateProductCommand, Product);
     if (!product.sku) {
       const count = await this.repo.countAsync({ organizationId: command.organizationId });
@@ -34,8 +47,15 @@ export class CreateProductCommandHandler implements ICommandHandler<CreateProduc
     }
     const created = await this.repo.createAsync(product);
 
-    if (command.unitIds?.length) {
-      await this.productUnitRepo.syncForProductAsync(created.id, command.unitIds, command.defaultUnitId);
+    if (unitConfiguration) {
+      await this.productUnitRepo.syncForProductAsync(
+        created.id,
+        command.organizationId,
+        unitConfiguration.units,
+        unitConfiguration.baseUnitId,
+        unitConfiguration.defaultSaleUnitId,
+        unitConfiguration.defaultPurchaseUnitId,
+      );
     }
 
     const entry = Object.assign(new ProductLogEntry(), {

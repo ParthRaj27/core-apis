@@ -15,6 +15,12 @@ export class DeleteOrganizationUnitCommandHandler implements ICommandHandler<Del
 
   public async execute(command: DeleteOrganizationUnitCommand): Promise<boolean> {
     this.logger.info(`Executing ${DeleteOrganizationUnitCommand.name} id=${command.id}`);
+    if (await this.repo.isInUseAsync(command.id)) {
+      const unit = await this.repo.getAsync(command.id);
+      unit.isActive = false;
+      await this.repo.updateAsync(unit);
+      return true;
+    }
     await this.repo.deleteAsync(command.id);
     return true;
   }

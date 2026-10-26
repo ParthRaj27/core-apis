@@ -73,6 +73,18 @@ export class ProductResponse {
 
   @ApiPropertyOptional()
   @AutoMap()
+  public baseUnitId?: string;
+
+  @ApiPropertyOptional()
+  @AutoMap()
+  public defaultSaleUnitId?: string;
+
+  @ApiPropertyOptional()
+  @AutoMap()
+  public defaultPurchaseUnitId?: string;
+
+  @ApiPropertyOptional()
+  @AutoMap()
   public weightKg?: number;
 
   @ApiPropertyOptional()

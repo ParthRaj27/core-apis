@@ -52,6 +52,15 @@ export class Product {
   public packSize?: number;
 
   @AutoMap()
+  public baseUnitId?: string;
+
+  @AutoMap()
+  public defaultSaleUnitId?: string;
+
+  @AutoMap()
+  public defaultPurchaseUnitId?: string;
+
+  @AutoMap()
   public weightKg?: number;
 
   @AutoMap()

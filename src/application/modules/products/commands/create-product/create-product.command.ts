@@ -1,5 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { CommandBase } from 'src/common';
+import { ProductUnitConfigurationRequest } from '../../models';
 
 export class CreateProductCommand extends CommandBase {
   @AutoMap()
@@ -55,4 +56,8 @@ export class CreateProductCommand extends CommandBase {
 
   public unitIds?: string[];
   public defaultUnitId?: string;
+  public units?: ProductUnitConfigurationRequest[];
+  @AutoMap() public baseUnitId?: string;
+  @AutoMap() public defaultSaleUnitId?: string;
+  @AutoMap() public defaultPurchaseUnitId?: string;
 }

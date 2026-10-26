@@ -12,6 +12,7 @@ import { EProductLogAction } from 'src/application/shared/enums/e-product-log-ac
 import { ActivityLogService, ProductActivityLogger, ProductLogEntry } from 'src/application/shared';
 import { EActivityAction } from 'src/infrastructure/persistence/entities/activity-log.entity';
 import { UpdateProductCommand } from './update-product.command';
+import { resolveProductUnitConfiguration } from '../../helpers';
 
 @CommandHandlerStrict(UpdateProductCommand)
 export class UpdateProductCommandHandler implements ICommandHandler<UpdateProductCommand, Product> {
@@ -27,6 +28,21 @@ export class UpdateProductCommandHandler implements ICommandHandler<UpdateProduc
   public async execute(command: UpdateProductCommand): Promise<Product> {
     this.logger.info(`Executing ${UpdateProductCommand.name} id=${command.id}`);
     const existing    = await this.repo.getAsync(command.id);
+    const unitConfiguration = resolveProductUnitConfiguration(command);
+    if (unitConfiguration) {
+      await this.productUnitRepo.validateBaseUnitChangeAsync(command.id, unitConfiguration.baseUnitId);
+      await this.productUnitRepo.validateConfigurationAsync(
+        existing.organizationId,
+        unitConfiguration.units,
+        unitConfiguration.baseUnitId,
+        unitConfiguration.defaultSaleUnitId,
+        unitConfiguration.defaultPurchaseUnitId,
+        command.id,
+      );
+      command.baseUnitId = unitConfiguration.baseUnitId;
+      command.defaultSaleUnitId = unitConfiguration.defaultSaleUnitId;
+      command.defaultPurchaseUnitId = unitConfiguration.defaultPurchaseUnitId;
+    }
     const patch       = this.mapper.map(command, UpdateProductCommand, Product);
     const changedFields: Array<{ field: string; oldValue: unknown; newValue: unknown }> = [];
 
@@ -42,8 +58,15 @@ export class UpdateProductCommandHandler implements ICommandHandler<UpdateProduc
 
     await this.repo.updateAsync(existing);
 
-    if (command.unitIds !== undefined) {
-      await this.productUnitRepo.syncForProductAsync(command.id, command.unitIds, command.defaultUnitId);
+    if (unitConfiguration) {
+      await this.productUnitRepo.syncForProductAsync(
+        command.id,
+        existing.organizationId,
+        unitConfiguration.units,
+        unitConfiguration.baseUnitId,
+        unitConfiguration.defaultSaleUnitId,
+        unitConfiguration.defaultPurchaseUnitId,
+      );
     }
 
     if (changedFields.length > 0) {

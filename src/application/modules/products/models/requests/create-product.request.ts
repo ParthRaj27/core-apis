@@ -1,6 +1,8 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsInt, IsNumber, IsOptional, IsString, IsUUID, Min, ValidateIf } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsInt, IsNumber, IsOptional, IsString, IsUUID, Min, ValidateIf, ValidateNested } from 'class-validator';
+import { ProductUnitConfigurationRequest } from './product-unit-configuration.request';
 
 export class CreateProductRequest {
   @ApiPropertyOptional()
@@ -43,6 +45,31 @@ export class CreateProductRequest {
   @IsOptional()
   @IsUUID()
   public defaultUnitId?: string;
+
+  @ApiPropertyOptional({ type: [ProductUnitConfigurationRequest], description: 'Product-specific conversion catalogue' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductUnitConfigurationRequest)
+  public units?: ProductUnitConfigurationRequest[];
+
+  @ApiPropertyOptional({ description: 'Authoritative inventory unit; its conversion factor must be 1' })
+  @IsOptional()
+  @IsUUID()
+  @AutoMap()
+  public baseUnitId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  @AutoMap()
+  public defaultSaleUnitId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  @AutoMap()
+  public defaultPurchaseUnitId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
